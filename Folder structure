@@ -1,0 +1,23 @@
+nanepay-frontend/
+├── app/
+│   ├── auth/
+│   │   ├── login/page.tsx
+│   │   └── register/page.tsx
+│   ├── dashboard/
+│   │   ├── deposit/page.tsx
+│   │   ├── history/page.tsx
+│   │   ├── send/page.tsx
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── globals.css
+│   └── layout.tsx
+├── lib/
+│   ├── api.ts
+│   └── auth.ts
+├── .gitignore
+├── .env.example
+├── next.config.js
+├── package.json
+├── postcss.config.js
+├── tailwind.config.js
+└── tsconfig.json
