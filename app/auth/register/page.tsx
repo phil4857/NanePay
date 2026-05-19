@@ -1,4 +1,3 @@
-// app/auth/register/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -14,7 +13,7 @@ import {
   User,
   Phone,
   Building2,
-  ShieldCheck,
+  CheckCircle,
 } from 'lucide-react'
 
 import toast from 'react-hot-toast'
@@ -41,7 +40,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     businessName: '',
-    referralCode: '',
+    businessType: '',
   })
 
   const [show, setShow] = useState({
@@ -50,19 +49,15 @@ export default function RegisterPage() {
   })
 
   const [loading, setLoading] = useState(false)
-  const [agree, setAgree] = useState(false)
 
-  const update = (key: string, value: string) => {
+  const update = (k: string, v: string) => {
     setForm(prev => ({
       ...prev,
-      [key]: value,
+      [k]: v,
     }))
   }
 
-  // ─────────────────────────────────────────────
-  // Password Strength
-  // ─────────────────────────────────────────────
-  const getPasswordStrength = () => {
+  const passwordStrength = (() => {
     let score = 0
 
     if (form.password.length >= 8) score++
@@ -71,80 +66,62 @@ export default function RegisterPage() {
     if (/[^a-zA-Z0-9]/.test(form.password)) score++
 
     return score
-  }
-
-  const strength = getPasswordStrength()
+  })()
 
   const strengthLabel =
-    strength >= 4
+    passwordStrength >= 4
       ? 'Strong'
-      : strength >= 3
+      : passwordStrength >= 3
       ? 'Good'
-      : strength >= 2
+      : passwordStrength >= 2
       ? 'Fair'
       : 'Weak'
 
   const strengthColor =
-    strength >= 4
+    passwordStrength >= 4
       ? 'bg-green-500'
-      : strength >= 3
+      : passwordStrength >= 3
       ? 'bg-yellow-500'
-      : strength >= 2
+      : passwordStrength >= 2
       ? 'bg-orange-500'
       : 'bg-red-500'
 
-  // ─────────────────────────────────────────────
-  // Submit
-  // ─────────────────────────────────────────────
-  const handleSubmit = async (
-    e?: React.FormEvent
-  ) => {
-    e?.preventDefault()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
     if (!form.name.trim()) {
-      return toast.error('Full name is required')
+      toast.error('Full name is required')
+      return
     }
 
     if (!form.email.trim()) {
-      return toast.error('Email is required')
+      toast.error('Email is required')
+      return
     }
 
     if (!form.phone.trim()) {
-      return toast.error('Phone number is required')
+      toast.error('Phone number is required')
+      return
     }
 
     if (form.password.length < 8) {
-      return toast.error(
-        'Password must be at least 8 characters'
-      )
+      toast.error('Password must be at least 8 characters')
+      return
     }
 
     if (!/\d/.test(form.password)) {
-      return toast.error(
-        'Password must contain at least one number'
-      )
-    }
-
-    if (!/[A-Z]/.test(form.password)) {
-      return toast.error(
-        'Password must contain at least one uppercase letter'
-      )
+      toast.error('Password must contain at least one number')
+      return
     }
 
     if (form.password !== form.confirmPassword) {
-      return toast.error('Passwords do not match')
+      toast.error('Passwords do not match')
+      return
     }
 
     if (role === 'merchant' && !form.businessName.trim()) {
-      return toast.error(
-        'Business name is required for merchants'
-      )
-    }
-
-    if (!agree) {
-      return toast.error(
-        'You must accept the Terms & Privacy Policy'
-      )
+      toast.error('Business name is required')
+      return
     }
 
     setLoading(true)
@@ -160,37 +137,32 @@ export default function RegisterPage() {
           role === 'merchant'
             ? form.businessName.trim()
             : undefined,
-        referralCode: form.referralCode.trim() || undefined,
+        businessType:
+          role === 'merchant'
+            ? form.businessType.trim()
+            : undefined,
       })
 
-      // Auto login after registration
-      if (res?.data?.token && res?.data?.user) {
-        saveAuth(res.data.token, res.data.user)
-      }
+      saveAuth(res.data.token, res.data.user)
 
       toast.success('Account created successfully')
 
       router.push('/dashboard')
-
     } catch (err: any) {
-
       const data = err?.response?.data
 
       if (data?.errors && Array.isArray(data.errors)) {
         toast.error(
-          data.errors
-            .map((e: any) => e.message)
-            .join(', ')
+          data.errors.map((e: any) => e.message).join(', ')
         )
       } else {
         toast.error(
-          data?.message ||
-            data?.error ||
+          data?.error ||
             data?.reason ||
-            'Registration failed. Please try again.'
+            err.message ||
+            'Registration failed'
         )
       }
-
     } finally {
       setLoading(false)
     }
@@ -198,15 +170,12 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-brand-dark flex items-center justify-center p-4 relative overflow-hidden">
-
-      {/* Glow */}
+      {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-brand-green/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md relative animate-slide-up">
-
         {/* Logo */}
         <div className="text-center mb-8">
-
           <Link
             href="/"
             className="inline-flex items-center gap-2.5 mb-6"
@@ -216,7 +185,8 @@ export default function RegisterPage() {
             </div>
 
             <span className="font-display font-bold text-2xl text-white">
-              Nane<span className="gradient-text">Pay</span>
+              Nane
+              <span className="gradient-text">Pay</span>
             </span>
           </Link>
 
@@ -225,13 +195,12 @@ export default function RegisterPage() {
           </h1>
 
           <p className="text-brand-muted mt-1 text-sm">
-            Free forever. Secure onboarding with M-Pesa support.
+            Free forever. No hidden fees.
           </p>
         </div>
 
         {/* Role Toggle */}
         <div className="card p-1 flex gap-1 mb-5">
-
           {(['user', 'merchant'] as Role[]).map(r => (
             <button
               key={r}
@@ -258,17 +227,13 @@ export default function RegisterPage() {
 
         {/* Form Card */}
         <div className="card p-8">
-
           <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-4"
           >
-
-            {/* Name */}
+            {/* Full Name */}
             <div>
-              <label className="label">
-                Full Name
-              </label>
+              <label className="label">Full Name</label>
 
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
@@ -287,9 +252,7 @@ export default function RegisterPage() {
 
             {/* Email */}
             <div>
-              <label className="label">
-                Email Address
-              </label>
+              <label className="label">Email Address</label>
 
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
@@ -331,76 +294,67 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {/* Merchant */}
+            {/* Merchant Fields */}
             {role === 'merchant' && (
-              <div>
-                <label className="label">
-                  Business Name
-                </label>
+              <>
+                <div>
+                  <label className="label">
+                    Business Name
+                  </label>
 
-                <div className="relative">
-                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
+                  <div className="relative">
+                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
+
+                    <input
+                      className="input-field pl-10"
+                      placeholder="My Hotspot Business"
+                      value={form.businessName}
+                      onChange={e =>
+                        update(
+                          'businessName',
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="label">
+                    Business Type
+                  </label>
 
                   <input
-                    type="text"
-                    className="input-field pl-10"
-                    placeholder="My Hotspot Business"
-                    value={form.businessName}
+                    className="input-field"
+                    placeholder="ISP, Cyber Café, Hotspot..."
+                    value={form.businessType}
                     onChange={e =>
                       update(
-                        'businessName',
+                        'businessType',
                         e.target.value
                       )
                     }
                   />
                 </div>
-              </div>
+              </>
             )}
-
-            {/* Referral */}
-            <div>
-              <label className="label">
-                Referral Code (Optional)
-              </label>
-
-              <input
-                type="text"
-                className="input-field"
-                placeholder="Enter referral code"
-                value={form.referralCode}
-                onChange={e =>
-                  update(
-                    'referralCode',
-                    e.target.value
-                  )
-                }
-              />
-            </div>
 
             {/* Password */}
             <div>
-              <label className="label">
-                Password
-              </label>
+              <label className="label">Password</label>
 
               <div className="relative">
-
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
 
                 <input
                   type={
-                    show.password
-                      ? 'text'
-                      : 'password'
+                    show.password ? 'text' : 'password'
                   }
                   className="input-field pl-10 pr-10"
-                  placeholder="Min 8 chars with uppercase & number"
+                  placeholder="Minimum 8 characters"
                   value={form.password}
                   onChange={e =>
-                    update(
-                      'password',
-                      e.target.value
-                    )
+                    update('password', e.target.value)
                   }
                 />
 
@@ -422,17 +376,15 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {/* Strength */}
+              {/* Strength Meter */}
               {form.password.length > 0 && (
                 <div className="mt-3">
-
                   <div className="flex gap-1 mb-2">
-
                     {[1, 2, 3, 4].map(i => (
                       <div
                         key={i}
-                        className={`h-1.5 flex-1 rounded-full transition-all ${
-                          i <= strength
+                        className={`h-1 flex-1 rounded-full transition-all ${
+                          i <= passwordStrength
                             ? strengthColor
                             : 'bg-brand-border'
                         }`}
@@ -440,43 +392,30 @@ export default function RegisterPage() {
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-brand-muted">
-                      Password strength
-                    </span>
-
-                    <span className="text-white font-medium">
+                  <p className="text-xs text-brand-muted">
+                    Password Strength:{' '}
+                    <span className="text-white">
                       {strengthLabel}
                     </span>
-                  </div>
+                  </p>
                 </div>
               )}
             </div>
 
-            {/* Confirm */}
+            {/* Confirm Password */}
             <div>
               <label className="label">
                 Confirm Password
               </label>
 
               <div className="relative">
-
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
 
                 <input
                   type={
-                    show.confirm
-                      ? 'text'
-                      : 'password'
+                    show.confirm ? 'text' : 'password'
                   }
-                  className={`input-field pl-10 pr-10 ${
-                    form.confirmPassword
-                      ? form.confirmPassword ===
-                        form.password
-                        ? 'border-green-500'
-                        : 'border-red-500'
-                      : ''
-                  }`}
+                  className="input-field pl-10 pr-10"
                   placeholder="Repeat password"
                   value={form.confirmPassword}
                   onChange={e =>
@@ -484,10 +423,6 @@ export default function RegisterPage() {
                       'confirmPassword',
                       e.target.value
                     )
-                  }
-                  onKeyDown={e =>
-                    e.key === 'Enter' &&
-                    handleSubmit()
                   }
                 />
 
@@ -510,71 +445,58 @@ export default function RegisterPage() {
               </div>
 
               {form.confirmPassword && (
-                <p
-                  className={`text-xs mt-1 ${
-                    form.confirmPassword ===
-                    form.password
-                      ? 'text-green-400'
-                      : 'text-red-400'
-                  }`}
-                >
+                <div className="flex items-center gap-1.5 mt-2 text-xs">
                   {form.confirmPassword ===
-                  form.password
-                    ? '✅ Passwords match'
-                    : '❌ Passwords do not match'}
-                </p>
+                  form.password ? (
+                    <>
+                      <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                      <span className="text-green-500">
+                        Passwords match
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-red-500">
+                      Passwords do not match
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
             {/* Terms */}
-            <label className="flex items-start gap-3 mt-1 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agree}
-                onChange={e =>
-                  setAgree(e.target.checked)
-                }
-                className="mt-1"
-              />
-
-              <span className="text-xs text-brand-muted leading-relaxed">
-                I agree to the{' '}
-                <Link
-                  href="/terms"
-                  className="text-brand-green hover:underline"
-                >
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link
-                  href="/privacy"
-                  className="text-brand-green hover:underline"
-                >
-                  Privacy Policy
-                </Link>
-                .
-              </span>
-            </label>
+            <p className="text-xs text-brand-muted leading-relaxed">
+              By creating an account you agree to our{' '}
+              <Link
+                href="/terms"
+                className="text-brand-green hover:underline"
+              >
+                Terms
+              </Link>{' '}
+              and{' '}
+              <Link
+                href="/privacy"
+                className="text-brand-green hover:underline"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
 
             {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary flex items-center justify-center gap-2 py-3.5 mt-2"
+              className="btn-primary flex items-center justify-center gap-2 py-3.5 mt-1"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating account...
+                  Creating Account...
                 </>
+              ) : role === 'merchant' ? (
+                'Apply as Merchant'
               ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4" />
-
-                  {role === 'merchant'
-                    ? 'Apply as Merchant'
-                    : 'Create Account'}
-                </>
+                'Create Account'
               )}
             </button>
           </form>
