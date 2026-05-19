@@ -1,9 +1,11 @@
 import axios from 'axios'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://nanepay-p704.onrender.com/api'
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://nanepay-p704.onrender.com/api',
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 30000,
+  timeout: 60000,
 })
 
 // Attach token to every request
@@ -15,7 +17,7 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Handle 401
+// Handle 401 — redirect to login
 api.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -40,13 +42,13 @@ export const authAPI = {
 }
 
 export const walletAPI = {
-  get: ()                => api.get('/wallet'),
-  transfer: (d: any)    => api.post('/wallet/transfer', d),
-  withdraw: (d: any)    => api.post('/wallet/withdraw', d),
+  get:      ()       => api.get('/wallet'),
+  transfer: (d: any) => api.post('/wallet/transfer', d),
+  withdraw: (d: any) => api.post('/wallet/withdraw', d),
 }
 
 export const txAPI = {
-  list: (p?: any) => api.get('/transactions', { params: p }),
+  list: (p?: any)    => api.get('/transactions', { params: p }),
   get:  (id: string) => api.get(`/transactions/${id}`),
 }
 
@@ -56,21 +58,21 @@ export const mpesaAPI = {
 }
 
 export const forexAPI = {
-  rates:    ()      => api.get('/forex/rates'),
+  rates:    ()       => api.get('/forex/rates'),
   exchange: (d: any) => api.post('/forex/exchange', d),
 }
 
 export const investAPI = {
-  plans:    ()             => api.get('/invest/plans'),
-  mine:     ()             => api.get('/invest/mine'),
-  invest:   (d: any)      => api.post('/invest', d),
-  withdraw: (id: string)  => api.post(`/invest/${id}/withdraw`),
+  plans:    ()            => api.get('/invest/plans'),
+  mine:     ()            => api.get('/invest/mine'),
+  invest:   (d: any)     => api.post('/invest', d),
+  withdraw: (id: string) => api.post(`/invest/${id}/withdraw`),
 }
 
 export const merchantAPI = {
-  profile:      ()      => api.get('/merchant/profile'),
-  register:     (d: any) => api.post('/merchant/register', d),
-  links:        ()      => api.get('/merchant/payment-links'),
-  createLink:   (d: any) => api.post('/merchant/payment-links', d),
-  analytics:    ()      => api.get('/merchant/analytics'),
+  profile:    ()       => api.get('/merchant/profile'),
+  register:   (d: any) => api.post('/merchant/register', d),
+  links:      ()       => api.get('/merchant/payment-links'),
+  createLink: (d: any) => api.post('/merchant/payment-links', d),
+  analytics:  ()       => api.get('/merchant/analytics'),
 }
