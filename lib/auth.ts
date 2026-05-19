@@ -1,20 +1,30 @@
-export const getToken = () =>
-  typeof window !== 'undefined' ? localStorage.getItem('nanepay_token') : null
+// lib/api.ts  ← REPLACEMENT
+import axios from 'axios'
+import Cookies from 'js-cookie'
 
-export const getUser = () => {
-  if (typeof window === 'undefined') return null
-  const u = localStorage.getItem('nanepay_user')
-  return u ? JSON.parse(u) : null
-}
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
+})
 
-export const saveAuth = (token: string, user: any) => {
-  localStorage.setItem('nanepay_token', token)
-  localStorage.setItem('nanepay_user', JSON.stringify(user))
-}
+// Attach JWT on every request
+api.interceptors.request.use(config => {
+  const token = Cookies.get('token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
 
-export const clearAuth = () => {
-  localStorage.removeItem('nanepay_token')
-  localStorage.removeItem('nanepay_user')
-}
+// Handle 401 globally — redirect to login
+api.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401 && typeof window !== 'undefined') {
+      Cookies.remove('token')
+      window.location.href = '/auth/login'
+    }
+    return Promise.reject(err)
+  }
+)
 
-export const isLoggedIn = () => !!getToken()
+export default api
