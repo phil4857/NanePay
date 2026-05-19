@@ -19,7 +19,12 @@ export default function RegisterPage() {
       saveAuth(res.data.token, res.data.user)
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.')
+      setError(
+  err.response?.data?.error ||
+  err.response?.data?.reason ||
+  err.message ||
+  'Registration failed. Please try again.'
+)
     } finally {
       setLoading(false)
     }
