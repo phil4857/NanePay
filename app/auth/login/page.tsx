@@ -1,80 +1,110 @@
+// app/auth/login/page.tsx  ← REPLACEMENT
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { authAPI } from '@/lib/api'
-import { saveAuth } from '@/lib/auth'
+import { Eye, EyeOff, Zap, Loader2, Mail, Lock } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { login } from '@/lib/auth'
 
 export default function LoginPage() {
   const router = useRouter()
   const [form, setForm]       = useState({ email: '', password: '' })
-  const [error, setError]     = useState('')
+  const [show, setShow]       = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const submit = async () => {
-    setError('')
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.email || !form.password) {
+      toast.error('Please fill in all fields')
+      return
+    }
     setLoading(true)
     try {
-      const res = await authAPI.login(form)
-      saveAuth(res.data.token, res.data.user)
+      await login(form.email, form.password)
+      toast.success('Welcome back!')
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.')
+      toast.error(err?.response?.data?.message || 'Invalid email or password')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-pattern flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-brand-dark flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-brand-green/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md relative animate-slide-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-white text-xl font-display mx-auto mb-3"
-            style={{ background: 'linear-gradient(135deg, #c8602a, #d4a853)' }}>N</div>
-          <h1 className="font-display font-bold text-2xl">Welcome back</h1>
-          <p className="text-soft text-sm mt-1">Sign in to your NanePay account</p>
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow-green">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-display font-bold text-2xl text-white">Nane<span className="gradient-text">Pay</span></span>
+          </Link>
+          <h1 className="font-display text-2xl font-bold text-white">Welcome back</h1>
+          <p className="text-brand-muted mt-1 text-sm">Sign in to your account</p>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl p-8" style={{ background: '#161210', border: '1px solid #2a211a' }}>
-          {error && (
-            <div className="mb-4 p-3 rounded-xl text-sm text-red-400"
-              style={{ background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.2)' }}>
-              {error}
+        <div className="card p-8">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* Email */}
+            <div>
+              <label className="label">Email address</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
+                <input
+                  type="email"
+                  className="input-field pl-10"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={e => setForm({ ...form, email: e.target.value })}
+                  autoComplete="email"
+                />
+              </div>
             </div>
-          )}
 
-          <div className="mb-4">
-            <label className="block text-soft text-sm mb-2">Email Address</label>
-            <input type="email" placeholder="you@email.com"
-              value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-              className="w-full px-4 py-3.5 rounded-xl text-sm"
-              style={{ background: '#1c1714', border: '1px solid #2a211a', color: '#f0e6dc' }} />
-          </div>
+            {/* Password */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="label mb-0">Password</label>
+                <Link href="/auth/forgot-password" className="text-xs text-brand-green hover:text-primary-400 transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
+                <input
+                  type={show ? 'text' : 'password'}
+                  className="input-field pl-10 pr-10"
+                  placeholder="Enter your password"
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  autoComplete="current-password"
+                />
+                <button type="button" onClick={() => setShow(!show)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-muted hover:text-white transition-colors">
+                  {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
 
-          <div className="mb-6">
-            <label className="block text-soft text-sm mb-2">Password</label>
-            <input type="password" placeholder="••••••••"
-              value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-              onKeyDown={e => e.key === 'Enter' && submit()}
-              className="w-full px-4 py-3.5 rounded-xl text-sm"
-              style={{ background: '#1c1714', border: '1px solid #2a211a', color: '#f0e6dc' }} />
-          </div>
-
-          <button onClick={submit} disabled={loading}
-            className="w-full py-3.5 rounded-xl font-semibold text-white transition-all hover:opacity-90 disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg, #c8602a, #d4a853)' }}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-
-          <p className="text-center text-soft text-sm mt-5">
-            No account?{' '}
-            <Link href="/auth/register" className="text-terra hover:underline" style={{ color: '#c8602a' }}>
-              Create one free
-            </Link>
-          </p>
+            <button type="submit" disabled={loading} className="btn-primary flex items-center justify-center gap-2 py-3.5 mt-1">
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</> : 'Sign In'}
+            </button>
+          </form>
         </div>
+
+        <p className="text-center text-brand-muted text-sm mt-6">
+          Don't have an account?{' '}
+          <Link href="/auth/register" className="text-brand-green hover:text-primary-400 font-medium transition-colors">
+            Sign up free
+          </Link>
+        </p>
       </div>
     </div>
   )
