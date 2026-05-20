@@ -1,4 +1,3 @@
-// ── TYPES ─────────────────────────────────────────────────────
 export interface AuthUser {
   id:         string
   name:       string
@@ -10,8 +9,8 @@ export interface AuthUser {
 }
 
 export interface AuthWallet {
-  balance:             number
-  currency:            string
+  balance:            number
+  currency:           string
   investment_balance?: number
 }
 
@@ -40,11 +39,7 @@ export const getWallet = (): AuthWallet | null => {
 }
 
 // ── SAVE ──────────────────────────────────────────────────────
-export const saveAuth = (
-  token:  string,
-  user:   AuthUser,
-  wallet?: AuthWallet
-) => {
+export const saveAuth = (token: string, user: AuthUser, wallet?: AuthWallet) => {
   localStorage.setItem('nanepay_token', token)
   localStorage.setItem('nanepay_user',  JSON.stringify(user))
   if (wallet) localStorage.setItem('nanepay_wallet', JSON.stringify(wallet))
@@ -62,33 +57,16 @@ export const clearAuth = () => {
 }
 
 // ── CHECKS ────────────────────────────────────────────────────
-export const isLoggedIn = (): boolean =>
-  !!getToken()
-
-export const isAdmin = (): boolean =>
-  getUser()?.role === 'admin'
-
-export const isMerchant = (): boolean =>
-  ['merchant', 'admin'].includes(getUser()?.role || '')
+export const isLoggedIn  = (): boolean  => !!getToken()
+export const isAdmin     = (): boolean  => getUser()?.role === 'admin'
+export const isMerchant  = (): boolean  => ['merchant', 'admin'].includes(getUser()?.role || '')
 
 // ── FORMAT HELPERS ────────────────────────────────────────────
 export const fmtKES = (n: number): string =>
-  `KES ${(n || 0).toLocaleString('en-KE', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`
+  `KES ${(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export const fmtDate = (d: string): string =>
-  new Date(d).toLocaleDateString('en-KE', {
-    day:   'numeric',
-    month: 'short',
-    year:  'numeric',
-  })
+  new Date(d).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
 
 export const fmtDateTime = (d: string): string =>
-  new Date(d).toLocaleString('en-KE', {
-    day:    'numeric',
-    month:  'short',
-    hour:   '2-digit',
-    minute: '2-digit',
-  })
+  new Date(d).toLocaleString('en-KE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
