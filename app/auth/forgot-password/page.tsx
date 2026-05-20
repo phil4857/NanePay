@@ -1,81 +1,100 @@
-// app/auth/forgot-password/page.tsx  ← NEW FILE
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Mail, Zap, Loader2, ArrowLeft, CheckCircle } from 'lucide-react'
-import toast from 'react-hot-toast'
-import api from '@/lib/api'
+import { authAPI } from '@/lib/api'
 
 export default function ForgotPasswordPage() {
-  const [email,   setEmail]   = useState('')
+  const [email, setEmail]     = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent,    setSent]    = useState(false)
+  const [sent, setSent]       = useState(false)
+  const [error, setError]     = useState('')
+  const [devToken, setDevToken] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email) { toast.error('Please enter your email'); return }
-    setLoading(true)
+  const submit = async () => {
+    if (!email) return setError('Email is required')
+    setError(''); setLoading(true)
     try {
-      await api.post('/auth/forgot-password', { email })
+      const res = await authAPI.forgotPassword({ email })
       setSent(true)
-    } catch {
-      toast.error('Something went wrong. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+      if (res.data.dev_token) setDevToken(res.data.dev_token)
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to send reset email')
+    } finally { setLoading(false) }
   }
 
   return (
-    <div className="min-h-screen bg-brand-dark flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-brand-green/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="w-full max-w-md relative animate-slide-up">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow-green">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-display font-bold text-2xl text-white">Nane<span className="gradient-text">Pay</span></span>
-          </Link>
-          <h1 className="font-display text-2xl font-bold text-white">
-            {sent ? 'Check your inbox' : 'Reset your password'}
+    <div style={{
+      minHeight: '100vh', background: '#0A0A0F',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+      backgroundImage: 'radial-gradient(ellipse at 30% 20%, rgba(108,99,255,0.1) 0%, transparent 50%)',
+    }}>
+      <div style={{ width: '100%', maxWidth: '420px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{
+            width: '60px', height: '60px', borderRadius: '18px', margin: '0 auto 14px',
+            background: 'linear-gradient(135deg, #6C63FF, #00D4AA)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '26px', fontWeight: 800, color: '#fff',
+            boxShadow: '0 0 30px rgba(108,99,255,0.4)',
+          }}>N</div>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '26px', color: '#F0F0FF', marginBottom: '4px' }}>
+            Reset Password
           </h1>
-          <p className="text-brand-muted mt-1 text-sm">
-            {sent ? `We sent a reset link to ${email}` : 'Enter your email and we\'ll send a reset link'}
+          <p style={{ color: '#8888AA', fontSize: '14px' }}>
+            {sent ? 'Check your email for the reset link' : "Enter your email and we'll send a reset link"}
           </p>
         </div>
 
-        <div className="card p-8">
-          {sent ? (
-            <div className="text-center py-4 flex flex-col items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-brand-green/10 flex items-center justify-center">
-                <CheckCircle className="w-7 h-7 text-brand-green" />
-              </div>
-              <p className="text-gray-300 text-sm">Didn't receive it? Check your spam folder or{' '}
-                <button onClick={() => setSent(false)} className="text-brand-green hover:underline">try again</button>.
-              </p>
-              <Link href="/auth/login" className="btn-primary w-full text-center py-3 mt-2">Back to Sign In</Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              <div>
-                <label className="label">Email address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted" />
-                  <input type="email" className="input-field pl-10" placeholder="you@example.com"
-                    value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
+        <div style={{ background: '#12121A', border: '1px solid #2A2A3E', borderRadius: '20px', padding: '32px' }}>
+          {!sent ? (
+            <>
+              {error && (
+                <div style={{ background: 'rgba(255,69,96,0.1)', border: '1px solid rgba(255,69,96,0.25)', borderRadius: '10px', padding: '12px 14px', marginBottom: '20px', color: '#FF4560', fontSize: '13px' }}>
+                  ⚠️ {error}
                 </div>
+              )}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', color: '#8888AA', fontSize: '13px', marginBottom: '8px' }}>Email Address</label>
+                <input type="email" placeholder="you@email.com" value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && submit()}
+                  style={{ width: '100%', padding: '14px 16px', borderRadius: '12px', background: '#1A1A26', border: '1px solid #2A2A3E', color: '#F0F0FF', fontSize: '15px', outline: 'none', boxSizing: 'border-box' as const }} />
               </div>
-              <button type="submit" disabled={loading} className="btn-primary flex items-center justify-center gap-2 py-3.5">
-                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</> : 'Send Reset Link'}
+              <button onClick={submit} disabled={loading} style={{
+                width: '100%', padding: '14px', borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6C63FF, #9C92FF)',
+                border: 'none', color: '#fff', fontSize: '15px', fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
+                boxShadow: '0 4px 20px rgba(108,99,255,0.35)',
+              }}>
+                {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
-            </form>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📧</div>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '20px', marginBottom: '8px' }}>
+                Reset link sent!
+              </h3>
+              <p style={{ color: '#8888AA', fontSize: '14px', marginBottom: '20px' }}>
+                Check your email inbox for the reset link. It expires in 1 hour.
+              </p>
+              {devToken && (
+                <div style={{ background: 'rgba(108,99,255,0.1)', border: '1px solid rgba(108,99,255,0.25)', borderRadius: '10px', padding: '12px', marginBottom: '16px', textAlign: 'left' }}>
+                  <p style={{ color: '#6C63FF', fontSize: '11px', marginBottom: '6px' }}>DEV MODE — Reset token:</p>
+                  <Link href={`/auth/reset-password?token=${devToken}`} style={{ color: '#00D4AA', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all' as const }}>
+                    Click here to reset password
+                  </Link>
+                </div>
+              )}
+            </div>
           )}
-        </div>
 
-        <Link href="/auth/login" className="flex items-center justify-center gap-2 text-brand-muted hover:text-white text-sm mt-6 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to Sign In
-        </Link>
+          <p style={{ textAlign: 'center', color: '#8888AA', fontSize: '14px', marginTop: '20px' }}>
+            Remember it?{' '}
+            <Link href="/auth/login" style={{ color: '#6C63FF', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   )
