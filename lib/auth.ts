@@ -7,9 +7,10 @@ export const getUser = () => {
   return u ? JSON.parse(u) : null
 }
 
-export const saveAuth = (token: string, user: any) => {
+export const saveAuth = (token: string, user: AuthUser, wallet?: AuthWallet) => {
   localStorage.setItem('nanepay_token', token)
   localStorage.setItem('nanepay_user', JSON.stringify(user))
+  if (wallet) localStorage.setItem('nanepay_wallet', JSON.stringify(wallet))
 }
 
 export const clearAuth = () => {
