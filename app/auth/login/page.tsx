@@ -44,8 +44,7 @@ export default function LoginPage() {
         password: form.password,
       })
 
-      saveAuth(res.data.token, res.data.user)
-
+      saveAuth(res.data.token, res.data.user, res.data.wallet)
       toast.success('Welcome back!')
 
       router.push('/dashboard')
