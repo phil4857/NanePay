@@ -58,8 +58,10 @@ export default function RegisterPage() {
         password: form.password,
       })
 
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('user', JSON.stringify(res.data.user))
+      console.log(res.data)
+
+      localStorage.setItem('nanepay_token', res.data.token)
+      localStorage.setItem('nanepay_user', JSON.stringify(res.data.user))
 
       setSuccess('Registration successful')
 
@@ -68,6 +70,8 @@ export default function RegisterPage() {
       }, 1200)
 
     } catch (err: any) {
+      console.log(err?.response?.data)
+
       setError(
         err?.response?.data?.message ||
         err?.response?.data?.error ||
@@ -80,105 +84,123 @@ export default function RegisterPage() {
 
   const inputStyle = {
     width: '100%',
-    padding: '14px 16px',
-    borderRadius: '14px',
-    background: 'rgba(255,255,255,0.04)',
+    padding: '15px 16px',
+    borderRadius: '16px',
+    background: 'rgba(255,255,255,0.05)',
     border: '1px solid rgba(255,255,255,0.08)',
     color: '#fff',
     outline: 'none',
     fontSize: '14px',
     boxSizing: 'border-box' as const,
+    transition: 'all 0.2s ease',
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '20px',
-      background: 'radial-gradient(circle at top, #1b1b2a, #09090f)',
-      color: '#fff',
-    }}>
-
-      <div style={{
-        width: '100%',
-        maxWidth: '430px',
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        backdropFilter: 'blur(14px)',
-        borderRadius: '24px',
-        padding: '30px',
-      }}>
-
-        {/* LOGO */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{
-            width: '72px',
-            height: '72px',
-            borderRadius: '20px',
-            margin: '0 auto 14px',
-            background: 'linear-gradient(135deg,#6C63FF,#00E5A8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '28px',
-            fontWeight: 800,
-          }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '24px',
+        background:
+          'radial-gradient(circle at top left, rgba(108,99,255,0.25), transparent 30%), radial-gradient(circle at bottom right, rgba(0,229,168,0.18), transparent 30%), #07070B',
+        color: '#fff',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '450px',
+          background: 'rgba(18,18,26,0.92)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(16px)',
+          borderRadius: '28px',
+          padding: '34px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+        }}
+      >
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <div
+            style={{
+              width: '82px',
+              height: '82px',
+              borderRadius: '24px',
+              margin: '0 auto 16px',
+              background: 'linear-gradient(135deg,#6C63FF,#00E5A8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '32px',
+              fontWeight: 900,
+              color: '#fff',
+              boxShadow: '0 10px 35px rgba(108,99,255,0.35)',
+            }}
+          >
             N
           </div>
 
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: 800,
-            marginBottom: '6px',
-            background: 'linear-gradient(90deg,#6C63FF,#00E5A8)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>
+          <h1
+            style={{
+              fontSize: '30px',
+              fontWeight: 900,
+              marginBottom: '8px',
+              background: 'linear-gradient(90deg,#6C63FF,#00E5A8)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             Create Account
           </h1>
 
-          <p style={{
-            color: '#9aa0b4',
-            fontSize: '14px',
-          }}>
-            Join NanePay and manage money smarter
+          <p
+            style={{
+              color: '#9AA0B4',
+              fontSize: '14px',
+              lineHeight: 1.5,
+            }}
+          >
+            Secure digital payments, investments, forex and bill management in one platform.
           </p>
         </div>
 
-        {/* ALERTS */}
+        {/* Error */}
         {error && (
-          <div style={{
-            marginBottom: '16px',
-            background: 'rgba(255,77,109,0.1)',
-            border: '1px solid rgba(255,77,109,0.2)',
-            color: '#FF4D6D',
-            padding: '12px',
-            borderRadius: '12px',
-            fontSize: '13px',
-          }}>
-            {error}
+          <div
+            style={{
+              marginBottom: '16px',
+              background: 'rgba(255,77,109,0.12)',
+              border: '1px solid rgba(255,77,109,0.25)',
+              color: '#FF4D6D',
+              padding: '13px',
+              borderRadius: '14px',
+              fontSize: '13px',
+            }}
+          >
+            ⚠️ {error}
           </div>
         )}
 
+        {/* Success */}
         {success && (
-          <div style={{
-            marginBottom: '16px',
-            background: 'rgba(0,229,168,0.1)',
-            border: '1px solid rgba(0,229,168,0.2)',
-            color: '#00E5A8',
-            padding: '12px',
-            borderRadius: '12px',
-            fontSize: '13px',
-          }}>
-            {success}
+          <div
+            style={{
+              marginBottom: '16px',
+              background: 'rgba(0,229,168,0.12)',
+              border: '1px solid rgba(0,229,168,0.25)',
+              color: '#00E5A8',
+              padding: '13px',
+              borderRadius: '14px',
+              fontSize: '13px',
+            }}
+          >
+            ✅ {success}
           </div>
         )}
 
-        {/* FORM */}
+        {/* Form */}
         <form onSubmit={register}>
-
           <div style={{ marginBottom: '14px' }}>
             <input
               type="text"
@@ -219,7 +241,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '22px' }}>
             <input
               type="password"
               placeholder="Confirm Password"
@@ -234,43 +256,47 @@ export default function RegisterPage() {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '14px',
-              borderRadius: '14px',
+              padding: '15px',
+              borderRadius: '16px',
               border: 'none',
               background: loading
                 ? '#2b2b38'
                 : 'linear-gradient(135deg,#6C63FF,#00E5A8)',
               color: '#fff',
-              fontWeight: 700,
+              fontWeight: 800,
               fontSize: '15px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              marginBottom: '18px',
+              marginBottom: '20px',
+              boxShadow: loading
+                ? 'none'
+                : '0 10px 30px rgba(108,99,255,0.35)',
+              transition: 'all 0.2s ease',
             }}
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
-
         </form>
 
-        {/* LOGIN */}
-        <div style={{
-          textAlign: 'center',
-          fontSize: '13px',
-          color: '#9aa0b4',
-        }}>
+        {/* Footer */}
+        <div
+          style={{
+            textAlign: 'center',
+            fontSize: '13px',
+            color: '#9AA0B4',
+          }}
+        >
           Already have an account?{' '}
           <Link
             href="/auth/login"
             style={{
               color: '#00E5A8',
               textDecoration: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
             Sign in
           </Link>
         </div>
-
       </div>
     </div>
   )
