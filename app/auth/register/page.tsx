@@ -1,7 +1,6 @@
-// app/auth/register/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
@@ -22,24 +21,12 @@ import api from '@/lib/api'
 
 type Role = 'user' | 'merchant'
 
-type RegisterPayload = {
-  name: string
-  email: string
-  phone: string
-  password: string
-  role: Role
-  businessName?: string
-  businessType?: string
-}
-
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const type = searchParams?.get('type')
-
-  const defaultRole: Role =
-    type === 'merchant'
+  const defaultRole =
+    searchParams.get('type') === 'merchant'
       ? 'merchant'
       : 'user'
 
@@ -58,20 +45,11 @@ export default function RegisterPage() {
     businessType: '',
   })
 
-  const update = (k: string, v: string) => {
-    setForm(prev => ({
-      ...prev,
-      [k]: v,
-    }))
-  }
+  const update = (k: string, v: string) =>
+    setForm(prev => ({ ...prev, [k]: v }))
 
-  // ─────────────────────────────────────
-  // PHONE NORMALIZER
-  // ─────────────────────────────────────
   const normalizePhone = (phone: string) => {
-    let p = phone
-      .replace(/\s+/g, '')
-      .replace(/\+/g, '')
+    let p = phone.replace(/\s+/g, '').replace('+', '')
 
     if (p.startsWith('0')) {
       p = '254' + p.slice(1)
@@ -80,20 +58,16 @@ export default function RegisterPage() {
     return p
   }
 
-  // ─────────────────────────────────────
-  // PASSWORD STRENGTH
-  // ─────────────────────────────────────
   const passwordStrength = (() => {
     const p = form.password
+    let s = 0
 
-    let score = 0
+    if (p.length >= 8) s++
+    if (/\d/.test(p)) s++
+    if (/[A-Z]/.test(p)) s++
+    if (/[^a-zA-Z0-9]/.test(p)) s++
 
-    if (p.length >= 8) score++
-    if (/\d/.test(p)) score++
-    if (/[A-Z]/.test(p)) score++
-    if (/[^a-zA-Z0-9]/.test(p)) score++
-
-    return score
+    return s
   })()
 
   const strengthLabel = [
@@ -104,51 +78,25 @@ export default function RegisterPage() {
     'Strong',
   ][passwordStrength]
 
-  // ─────────────────────────────────────
-  // STEP 1 VALIDATION
-  // ─────────────────────────────────────
   const validateStep1 = () => {
     if (!form.name.trim()) {
-      toast.error('Full name is required')
+      toast.error('Name is required')
       return false
     }
 
-    if (!form.email.trim()) {
-      toast.error('Email is required')
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) {
+      toast.error('Valid email is required')
       return false
     }
 
-    if (!/\S+@\S+\.\S+/.test(form.email)) {
-      toast.error('Enter a valid email')
-      return false
-    }
-
-    if (!form.phone.trim()) {
+    if (!form.phone) {
       toast.error('Phone number is required')
-      return false
-    }
-
-    const cleaned = form.phone
-      .replace(/\s+/g, '')
-      .replace(/^\+/, '')
-
-    const valid =
-      /^0[17]\d{8}$/.test(cleaned) ||
-      /^254[17]\d{8}$/.test(cleaned)
-
-    if (!valid) {
-      toast.error(
-        'Use 07XXXXXXXX, 01XXXXXXXX or +254XXXXXXXXX'
-      )
       return false
     }
 
     return true
   }
 
-  // ─────────────────────────────────────
-  // STEP 2 VALIDATION
-  // ─────────────────────────────────────
   const validateStep2 = () => {
     if (!form.password) {
       toast.error('Password is required')
@@ -156,16 +104,7 @@ export default function RegisterPage() {
     }
 
     if (form.password.length < 8) {
-      toast.error(
-        'Password must be at least 8 characters'
-      )
-      return false
-    }
-
-    if (!/\d/.test(form.password)) {
-      toast.error(
-        'Password must contain at least one number'
-      )
+      toast.error('Password must be at least 8 characters')
       return false
     }
 
@@ -174,10 +113,7 @@ export default function RegisterPage() {
       return false
     }
 
-    if (
-      role === 'merchant' &&
-      !form.businessName.trim()
-    ) {
+    if (role === 'merchant' && !form.businessName.trim()) {
       toast.error('Business name is required')
       return false
     }
@@ -191,9 +127,6 @@ export default function RegisterPage() {
     }
   }
 
-  // ─────────────────────────────────────
-  // SUBMIT
-  // ─────────────────────────────────────
   const handleSubmit = async () => {
     if (loading) return
 
@@ -202,7 +135,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      const payload: RegisterPayload = {
+      const payload: Record<string, any> = {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         phone: normalizePhone(form.phone),
@@ -211,9 +144,7 @@ export default function RegisterPage() {
       }
 
       if (role === 'merchant') {
-        payload.businessName =
-          form.businessName.trim()
-
+        payload.businessName = form.businessName.trim()
         payload.businessType =
           form.businessType.trim() || undefined
       }
@@ -223,7 +154,7 @@ export default function RegisterPage() {
         payload
       )
 
-      if (data?.token) {
+      if (data.token) {
         Cookies.set('token', data.token, {
           expires: 7,
           secure: true,
@@ -231,358 +162,144 @@ export default function RegisterPage() {
           path: '/',
         })
 
-        toast.success(
-          'Account created successfully 🎉'
-        )
-
+        toast.success('Welcome to NanePay 🎉')
         router.push('/dashboard')
       } else {
         toast.success(
-          data?.message ||
-            'Registration successful'
+          data.message || 'Account created successfully'
         )
 
         router.push('/auth/login')
       }
-    } catch (err: unknown) {
-      const error = err as any
-
+    } catch (err: any) {
       const message =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.response?.data?.errors?.[0]?.msg ||
-        error?.message ||
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
         'Registration failed'
 
       toast.error(message)
-
-      if (
-        message.toLowerCase().includes('email') ||
-        message.toLowerCase().includes('phone')
-      ) {
-        setStep(1)
-      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-green-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-green-950 flex items-center justify-center p-4">
 
-      {/* Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-green-500/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="w-full max-w-md">
 
-      <div className="w-full max-w-md relative z-10">
-
-        {/* Logo */}
         <div className="text-center mb-8">
-
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 mb-5"
-          >
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <div className="w-11 h-11 rounded-2xl bg-green-500 flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
 
             <span className="text-3xl font-black text-white">
-              Nane
-              <span className="text-green-400">
-                Pay
-              </span>
+              Nane<span className="text-green-400">Pay</span>
             </span>
-          </Link>
+          </div>
 
           <h1 className="text-3xl font-bold text-white">
             Create Account
           </h1>
-
-          <p className="text-green-200/70 mt-2 text-sm">
-            Fast • Secure • Modern Payments
-          </p>
         </div>
 
-        {/* Role Switch */}
-        <div className="bg-green-900/40 border border-green-700/40 rounded-2xl p-1 flex gap-1 mb-5 backdrop-blur">
+        <div className="bg-green-900/40 border border-green-700 rounded-3xl p-8">
 
-          {(['user', 'merchant'] as Role[]).map(r => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => {
-                setRole(r)
-                setStep(1)
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
-                role === r
-                  ? 'bg-green-500 text-white shadow-lg'
-                  : 'text-green-200 hover:text-white'
-              }`}
-            >
-              {r === 'user' ? (
-                <User className="w-4 h-4" />
-              ) : (
-                <Building2 className="w-4 h-4" />
-              )}
+          <div className="space-y-4">
 
-              {r === 'user'
-                ? 'Personal'
-                : 'Merchant'}
-            </button>
-          ))}
-        </div>
-
-        {/* Progress */}
-        <div className="flex gap-2 mb-5">
-          {[1, 2].map(s => (
-            <div
-              key={s}
-              className={`flex-1 h-1.5 rounded-full ${
-                s <= step
-                  ? 'bg-green-400'
-                  : 'bg-green-900'
-              }`}
+            <input
+              className="w-full bg-green-950 border border-green-700 rounded-xl px-4 py-3 text-white"
+              placeholder="Full Name"
+              value={form.name}
+              onChange={e => update('name', e.target.value)}
             />
-          ))}
-        </div>
 
-        {/* Card */}
-        <div className="bg-green-900/30 border border-green-700/40 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
+            <input
+              type="email"
+              className="w-full bg-green-950 border border-green-700 rounded-xl px-4 py-3 text-white"
+              placeholder="Email"
+              value={form.email}
+              onChange={e => update('email', e.target.value)}
+            />
 
-          {/* STEP 1 */}
-          {step === 1 && (
-            <div className="space-y-4">
+            <input
+              type="tel"
+              className="w-full bg-green-950 border border-green-700 rounded-xl px-4 py-3 text-white"
+              placeholder="Phone Number"
+              value={form.phone}
+              onChange={e => update('phone', e.target.value)}
+            />
 
-              {/* Name */}
-              <div>
-                <label className="text-sm text-green-100 mb-2 block">
-                  Full Name
-                </label>
-
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-300" />
-
-                  <input
-                    type="text"
-                    placeholder="John Doe"
-                    value={form.name}
-                    onChange={e =>
-                      update('name', e.target.value)
-                    }
-                    className="w-full bg-green-950/50 border border-green-700 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-green-400"
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="text-sm text-green-100 mb-2 block">
-                  Email Address
-                </label>
-
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-300" />
-
-                  <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={form.email}
-                    onChange={e =>
-                      update('email', e.target.value)
-                    }
-                    className="w-full bg-green-950/50 border border-green-700 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-green-400"
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="text-sm text-green-100 mb-2 block">
-                  Phone Number
-                </label>
-
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-300" />
-
-                  <input
-                    type="tel"
-                    placeholder="07XXXXXXXX"
-                    value={form.phone}
-                    onChange={e =>
-                      update('phone', e.target.value)
-                    }
-                    className="w-full bg-green-950/50 border border-green-700 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-green-400"
-                  />
-                </div>
-              </div>
+            <div className="relative">
+              <input
+                type={show ? 'text' : 'password'}
+                className="w-full bg-green-950 border border-green-700 rounded-xl px-4 py-3 text-white pr-10"
+                placeholder="Password"
+                value={form.password}
+                onChange={e => update('password', e.target.value)}
+              />
 
               <button
                 type="button"
-                onClick={handleContinue}
-                className="w-full bg-green-500 hover:bg-green-400 transition-all text-white py-3 rounded-xl font-semibold shadow-lg shadow-green-500/20"
+                onClick={() => setShow(!show)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-green-300"
               >
-                Continue →
+                {show ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
-          )}
 
-          {/* STEP 2 */}
-          {step === 2 && (
-            <div className="space-y-4">
+            <input
+              type={show ? 'text' : 'password'}
+              className="w-full bg-green-950 border border-green-700 rounded-xl px-4 py-3 text-white"
+              placeholder="Confirm Password"
+              value={form.confirmPassword}
+              onChange={e =>
+                update('confirmPassword', e.target.value)
+              }
+            />
 
-              {/* Merchant */}
-              {role === 'merchant' && (
-                <div>
-                  <label className="text-sm text-green-100 mb-2 block">
-                    Business Name
-                  </label>
-
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-300" />
-
-                    <input
-                      type="text"
-                      placeholder="My WiFi Business"
-                      value={form.businessName}
-                      onChange={e =>
-                        update(
-                          'businessName',
-                          e.target.value
-                        )
-                      }
-                      className="w-full bg-green-950/50 border border-green-700 rounded-xl pl-10 pr-4 py-3 text-white outline-none focus:border-green-400"
-                    />
-                  </div>
-                </div>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full bg-green-500 hover:bg-green-400 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Account'
               )}
+            </button>
 
-              {/* Password */}
-              <div>
-                <label className="text-sm text-green-100 mb-2 block">
-                  Password
-                </label>
+            <p className="text-center text-green-200 text-sm">
+              Already have an account?{' '}
+              <Link
+                href="/auth/login"
+                className="text-green-400"
+              >
+                Sign in
+              </Link>
+            </p>
 
-                <div className="relative">
-
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-300" />
-
-                  <input
-                    type={
-                      show ? 'text' : 'password'
-                    }
-                    placeholder="Minimum 8 characters"
-                    value={form.password}
-                    onChange={e =>
-                      update(
-                        'password',
-                        e.target.value
-                      )
-                    }
-                    className="w-full bg-green-950/50 border border-green-700 rounded-xl pl-10 pr-10 py-3 text-white outline-none focus:border-green-400"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShow(!show)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-green-300"
-                  >
-                    {show ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-
-                {/* Strength */}
-                {form.password.length > 0 && (
-                  <div className="mt-2">
-
-                    <div className="flex gap-1 mb-1">
-                      {[1, 2, 3, 4].map(i => (
-                        <div
-                          key={i}
-                          className={`flex-1 h-1 rounded-full ${
-                            i <= passwordStrength
-                              ? 'bg-green-400'
-                              : 'bg-green-900'
-                          }`}
-                        />
-                      ))}
-                    </div>
-
-                    <p className="text-xs text-green-300">
-                      {strengthLabel}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Confirm */}
-              <div>
-                <label className="text-sm text-green-100 mb-2 block">
-                  Confirm Password
-                </label>
-
-                <input
-                  type={show ? 'text' : 'password'}
-                  placeholder="Repeat password"
-                  value={form.confirmPassword}
-                  onChange={e =>
-                    update(
-                      'confirmPassword',
-                      e.target.value
-                    )
-                  }
-                  className="w-full bg-green-950/50 border border-green-700 rounded-xl px-4 py-3 text-white outline-none focus:border-green-400"
-                />
-              </div>
-
-              {/* Buttons */}
-              <div className="flex gap-3 pt-2">
-
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="px-5 py-3 rounded-xl border border-green-700 text-green-100"
-                >
-                  Back
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="flex-1 bg-green-500 hover:bg-green-400 transition-all text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : role === 'merchant' ? (
-                    'Apply as Merchant'
-                  ) : (
-                    'Create Account'
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-green-200/70 text-sm mt-6">
-          Already have an account?{' '}
-          <Link
-            href="/auth/login"
-            className="text-green-400 hover:text-green-300 font-semibold"
-          >
-            Sign in
-          </Link>
-        </p>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegisterContent />
+    </Suspense>
   )
 }
