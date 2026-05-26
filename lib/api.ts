@@ -1,126 +1,264 @@
 import axios from 'axios'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://nanepay-p704.onrender.com/api'
+const BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://nanepay-p704.onrender.com/api'
 
 const api = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
+  baseURL: BASE,
+  headers: {
+    'Content-Type': 'application/json',
+  },
   timeout: 60000,
 })
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((cfg) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('nanepay_token')
-    if (token) config.headers.Authorization = `Bearer ${token}`
+    const token = localStorage.getItem('np_token')
+
+    if (token) {
+      cfg.headers.Authorization = `Bearer ${token}`
+    }
   }
-  return config
+
+  return cfg
 })
 
 api.interceptors.response.use(
-  (res) => res,
+  (response) => response,
+
   (err) => {
-    if (err.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('nanepay_token')
-      localStorage.removeItem('nanepay_user')
-      localStorage.removeItem('nanepay_wallet')
+    if (
+      err.response?.status === 401 &&
+      typeof window !== 'undefined'
+    ) {
+      localStorage.removeItem('np_token')
+      localStorage.removeItem('np_user')
+
       window.location.href = '/auth/login'
     }
+
     return Promise.reject(err)
   }
 )
 
 export default api
 
+// ── Auth ─────────────────────────────────────────────
+
 export const authAPI = {
-  register:       (d: any) => api.post('/auth/register', d),
-  login:          (d: any) => api.post('/auth/login', d),
-  me:             ()       => api.get('/auth/me'),
-  logout:         ()       => api.post('/auth/logout'),
-  forgotPassword: (d: any) => api.post('/auth/forgot-password', d),
-  resetPassword:  (d: any) => api.post('/auth/reset-password', d),
+  register: (d: any) => api.post('/auth/register', d),
+  login: (d: any) => api.post('/auth/login', d),
+  me: () => api.get('/auth/me'),
+  forgotPassword: (d: any) =>
+    api.post('/auth/forgot-password', d),
+  resetPassword: (d: any) =>
+    api.post('/auth/reset-password', d),
+  setPin: (d: any) => api.post('/auth/set-pin', d),
 }
 
+// ── Wallet ───────────────────────────────────────────
+
 export const walletAPI = {
-  get:      ()       => api.get('/wallet'),
+  balance: () => api.get('/wallet/balance'),
+  deposit: (d: any) => api.post('/wallet/deposit', d),
   transfer: (d: any) => api.post('/wallet/transfer', d),
   withdraw: (d: any) => api.post('/wallet/withdraw', d),
 }
 
+// ── Transactions ─────────────────────────────────────
+
 export const txAPI = {
-  list: (p?: any)    => api.get('/transactions', { params: p }),
-  get:  (id: string) => api.get(`/transactions/${id}`),
+  list: (p?: any) =>
+    api.get('/transactions', { params: p }),
+
+  get: (ref: string) =>
+    api.get(`/transactions/${ref}`),
 }
+
+// ── M-Pesa ───────────────────────────────────────────
 
 export const mpesaAPI = {
-  stkPush: (d: any)      => api.post('/mpesa/stk-push', d),
-  status:  (id: string)  => api.get(`/mpesa/status/${id}`),
+  stkPush: (d: any) =>
+    api.post('/mpesa/stk-push', d),
+
+  status: (id: string) =>
+    api.get(`/mpesa/stk-status/${id}`),
 }
 
-export const forexAPI = {
-  rates:    ()       => api.get('/forex/rates'),
-  exchange: (d: any) => api.post('/forex/exchange', d),
-}
+// ── Investments ──────────────────────────────────────
 
 export const investAPI = {
-  plans:    ()            => api.get('/invest/plans'),
-  mine:     ()            => api.get('/invest/mine'),
-  invest:   (d: any)     => api.post('/invest', d),
-  withdraw: (id: string) => api.post(`/invest/${id}/withdraw`),
+  plans: () => api.get('/invest/plans'),
+
+  mine: () => api.get('/invest'),
+
+  invest: (d: any) =>
+    api.post('/invest', d),
+
+  withdraw: (id: string) =>
+    api.post(`/invest/${id}/withdraw`),
 }
+
+// ── Forex ────────────────────────────────────────────
+
+export const forexAPI = {
+  rates: () => api.get('/forex/rates'),
+
+  exchange: (d: any) =>
+    api.post('/forex/exchange', d),
+}
+
+// ── WiFi ─────────────────────────────────────────────
+
+export const wifiAPI = {
+  vendors: () => api.get('/wifi/vendors'),
+
+  sessions: () => api.get('/wifi/sessions'),
+
+  buy: (d: any) => api.post('/wifi/buy', d),
+
+  validate: (v: string) =>
+    api.get(`/wifi/validate/${v}`),
+}
+
+// ── Hotspot ──────────────────────────────────────────
+
+export const hotspotAPI = {
+  browse: () => api.get('/hotspot/browse'),
+
+  mine: () => api.get('/hotspot/mine'),
+
+  register: (d: any) =>
+    api.post('/hotspot/register', d),
+
+  addPackage: (vendorId: any, d: any) =>
+    api.post(`/hotspot/${vendorId}/packages`, d),
+
+  delPackage: (vendorId: any, pkgId: any) =>
+    api.delete(
+      `/hotspot/${vendorId}/packages/${pkgId}`
+    ),
+
+  stats: (vendorId: any) =>
+    api.get(`/hotspot/${vendorId}/stats`),
+}
+
+// ── Merchant ─────────────────────────────────────────
 
 export const merchantAPI = {
-  profile:    ()       => api.get('/merchant/profile'),
-  register:   (d: any) => api.post('/merchant/register', d),
-  links:      ()       => api.get('/merchant/payment-links'),
-  createLink: (d: any) => api.post('/merchant/payment-links', d),
-  analytics:  ()       => api.get('/merchant/analytics'),
+  register: (d: any) =>
+    api.post('/merchant/register', d),
+
+  dashboard: () =>
+    api.get('/merchant/dashboard'),
+
+  analytics: () =>
+    api.get('/merchant/analytics'),
+
+  link: () =>
+    api.get('/merchant/link'),
+
+  pay: (slug: string, d: any) =>
+    api.post(`/merchant/pay/${slug}`, d),
 }
 
-export const packageAPI = {
-  list:   (p?: any) => api.get('/packages', { params: p }),
-  get:    (id: string) => api.get(`/packages/${id}`),
-  create: (d: any)  => api.post('/packages', d),
-  update: (id: string, d: any) => api.patch(`/packages/${id}`, d),
+// ── Coupons ──────────────────────────────────────────
+
+export const couponAPI = {
+  list: () => api.get('/coupon'),
+
+  redeem: (id: string) =>
+    api.post(`/coupon/${id}/redeem`),
 }
 
-export const subAPI = {
-  subscribe: (d: any)    => api.post('/subscriptions', d),
-  mine:      ()          => api.get('/subscriptions/mine'),
-  get:       (id: string) => api.get(`/subscriptions/${id}`),
+// ── Referrals ────────────────────────────────────────
+
+export const referralAPI = {
+  stats: () =>
+    api.get('/referrals/stats'),
+
+  claim: (d: any) =>
+    api.post('/referrals/claim', d),
 }
+
+// ── KYC ──────────────────────────────────────────────
+
+export const kycAPI = {
+  submit: (d: any) =>
+    api.post('/kyc/submit', d),
+
+  status: () =>
+    api.get('/kyc/status'),
+}
+
+// ── Notifications ────────────────────────────────────
 
 export const notifAPI = {
-  list:    ()            => api.get('/notifications'),
-  readAll: ()            => api.patch('/notifications/read-all'),
-  read:    (id: string)  => api.patch(`/notifications/${id}/read`),
+  list: () =>
+    api.get('/notifications'),
+
+  read: (id: string) =>
+    api.patch(`/notifications/${id}/read`),
+
+  readAll: () =>
+    api.patch('/notifications/read-all'),
 }
 
-export const qrAPI = {
-  generate: (d: any)    => api.post('/qr/generate', d),
-  get:      (id: string) => api.get(`/qr/${id}`),
-}
-
-export const requestAPI = {
-  send: (d: any) => api.post('/request', d),
-}
-
-export const adminAPI = {
-  stats:           ()                    => api.get('/admin/stats'),
-  users:           (p?: any)             => api.get('/admin/users', { params: p }),
-  suspendUser:     (id: string)          => api.patch(`/admin/users/${id}/suspend`),
-  merchants:       (p?: any)             => api.get('/admin/merchants', { params: p }),
-  approveMerchant: (id: string, d: any)  => api.patch(`/admin/merchants/${id}/approve`, d),
-  transactions:    (p?: any)             => api.get('/admin/transactions', { params: p }),
-  reverseTransaction: (id: string)       => api.patch(`/admin/transactions/${id}/reverse`),
-  withdrawals:     (p?: any)             => api.get('/admin/withdrawals', { params: p }),
-  subscriptions:   (p?: any)             => api.get('/admin/subscriptions', { params: p }),
-  revenue:         ()                    => api.get('/admin/reports/revenue'),
-}
+// ── Bills ────────────────────────────────────────────
 
 export const billsAPI = {
-  types:     ()       => api.get('/bills/types'),
-  providers: (t: string) => api.get(`/bills/providers/${t}`),
-  wifi:      (d: any) => api.post('/bills/wifi', d),
-  pay:       (d: any) => api.post('/bills/pay', d),
-  history:   ()       => api.get('/bills/history'),
+  wifi: (d: any) =>
+    api.post('/bills/wifi', d),
+
+  pay: (d: any) =>
+    api.post('/bills/pay', d),
+}
+
+// ── QR ───────────────────────────────────────────────
+
+export const qrAPI = {
+  generate: (d: any) =>
+    api.post('/qr/generate', d),
+
+  get: (id: string) =>
+    api.get(`/qr/${id}`),
+}
+
+// ── Request Money ────────────────────────────────────
+
+export const requestAPI = {
+  send: (d: any) =>
+    api.post('/request', d),
+}
+
+// ── Admin ────────────────────────────────────────────
+
+export const adminAPI = {
+  stats: () =>
+    api.get('/admin/stats'),
+
+  users: (p?: any) =>
+    api.get('/admin/users', { params: p }),
+
+  updateUserStatus: (id: string, d: any) =>
+    api.patch(`/admin/users/${id}/status`, d),
+
+  transactions: (p?: any) =>
+    api.get('/admin/transactions', { params: p }),
+
+  vendors: () =>
+    api.get('/admin/vendors'),
+
+  updateVendorStatus: (id: string, d: any) =>
+    api.patch(`/admin/vendors/${id}/status`, d),
+
+  revenue: () =>
+    api.get('/admin/stats'),
+
+  merchants: (p?: any) =>
+    api.get('/admin/merchants', { params: p }),
+
+  approveMerchant: (id: string, d: any) =>
+    api.patch(`/admin/merchants/${id}/approve`, d),
 }
