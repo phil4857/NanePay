@@ -248,5 +248,3 @@ export default function InvestPage() {
     </div>
   )
 }
-EOF
-echo "done"
