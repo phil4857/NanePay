@@ -1,72 +1,94 @@
 export interface AuthUser {
-  id:         string
-  name:       string
-  email:      string
-  phone:      string
-  role:       'user' | 'merchant' | 'admin'
-  is_active:  boolean
-  created_at: string
+  id: string | number
+  name: string
+  email: string
+  phone: string
+  role: 'user' | 'admin' | 'vendor'
+  kyc_status?: 'none' | 'pending' | 'verified'
+  referral_code?: string
+  balance?: number
+  created_at?: string
 }
 
-export interface AuthWallet {
-  balance:            number
-  currency:           string
-  investment_balance?: number
-}
-
-// ── TOKEN ─────────────────────────────────────────────────────
+// ── Token ──────────────────────────────────────────────────────
 export const getToken = (): string | null => {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('nanepay_token')
+  return localStorage.getItem('np_token')
 }
 
-// ── USER ──────────────────────────────────────────────────────
+// ── User ───────────────────────────────────────────────────────
 export const getUser = (): AuthUser | null => {
   if (typeof window === 'undefined') return null
+
   try {
-    const u = localStorage.getItem('nanepay_user')
+    const u = localStorage.getItem('np_user')
     return u ? JSON.parse(u) : null
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
-// ── WALLET ────────────────────────────────────────────────────
-export const getWallet = (): AuthWallet | null => {
-  if (typeof window === 'undefined') return null
-  try {
-    const w = localStorage.getItem('nanepay_wallet')
-    return w ? JSON.parse(w) : null
-  } catch { return null }
+// ── Save ───────────────────────────────────────────────────────
+export const saveAuth = (token: string, user: AuthUser) => {
+  if (typeof window === 'undefined') return
+
+  localStorage.setItem('np_token', token)
+  localStorage.setItem('np_user', JSON.stringify(user))
 }
 
-// ── SAVE ──────────────────────────────────────────────────────
-export const saveAuth = (token: string, user: AuthUser, wallet?: AuthWallet) => {
-  localStorage.setItem('nanepay_token', token)
-  localStorage.setItem('nanepay_user',  JSON.stringify(user))
-  if (wallet) localStorage.setItem('nanepay_wallet', JSON.stringify(wallet))
-}
-
-export const updateWallet = (wallet: AuthWallet) => {
-  localStorage.setItem('nanepay_wallet', JSON.stringify(wallet))
-}
-
-// ── CLEAR ─────────────────────────────────────────────────────
+// ── Clear ──────────────────────────────────────────────────────
 export const clearAuth = () => {
-  localStorage.removeItem('nanepay_token')
-  localStorage.removeItem('nanepay_user')
-  localStorage.removeItem('nanepay_wallet')
+  if (typeof window === 'undefined') return
+
+  localStorage.removeItem('np_token')
+  localStorage.removeItem('np_user')
 }
 
-// ── CHECKS ────────────────────────────────────────────────────
-export const isLoggedIn  = (): boolean  => !!getToken()
-export const isAdmin     = (): boolean  => getUser()?.role === 'admin'
-export const isMerchant  = (): boolean  => ['merchant', 'admin'].includes(getUser()?.role || '')
+// ── Checks ─────────────────────────────────────────────────────
+export const isLoggedIn = (): boolean => {
+  return !!getToken()
+}
 
-// ── FORMAT HELPERS ────────────────────────────────────────────
-export const fmtKES = (n: number): string =>
-  `KES ${(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+export const isAdmin = (): boolean => {
+  return getUser()?.role === 'admin'
+}
 
-export const fmtDate = (d: string): string =>
-  new Date(d).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
+export const isVendor = (): boolean => {
+  const role = getUser()?.role
+  return role === 'vendor' || role === 'admin'
+}
 
-export const fmtDateTime = (d: string): string =>
-  new Date(d).toLocaleString('en-KE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+// ── Formatters ─────────────────────────────────────────────────
+export const fmtKES = (n: number | string): string => {
+  return `KES ${(Number(n) || 0).toLocaleString('en-KE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+export const fmtDate = (d: string): string => {
+  return new Date(d).toLocaleDateString('en-KE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+export const fmtDateTime = (d: string): string => {
+  return new Date(d).toLocaleString('en-KE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+// ── Fees ───────────────────────────────────────────────────────
+export const calcFee = (amount: number): number => {
+  return Math.round(Number(amount) * 0.01 * 100) / 100
+}
+
+export const totalWithFee = (amount: number): number => {
+  return Number(amount) + calcFee(amount)
+}
