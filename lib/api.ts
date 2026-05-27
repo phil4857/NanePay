@@ -12,6 +12,8 @@ const api = axios.create({
   timeout: 60000,
 })
 
+// ── Request Interceptor ──────────────────────────────
+
 api.interceptors.request.use((cfg) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('np_token')
@@ -23,6 +25,8 @@ api.interceptors.request.use((cfg) => {
 
   return cfg
 })
+
+// ── Response Interceptor ─────────────────────────────
 
 api.interceptors.response.use(
   (response) => response,
@@ -47,30 +51,48 @@ export default api
 // ── Auth ─────────────────────────────────────────────
 
 export const authAPI = {
-  register: (d: any) => api.post('/auth/register', d),
-  login: (d: any) => api.post('/auth/login', d),
-  me: () => api.get('/auth/me'),
+  register: (d: any) =>
+    api.post('/auth/register', d),
+
+  login: (d: any) =>
+    api.post('/auth/login', d),
+
+  me: () =>
+    api.get('/auth/me'),
+
   forgotPassword: (d: any) =>
     api.post('/auth/forgot-password', d),
+
   resetPassword: (d: any) =>
     api.post('/auth/reset-password', d),
-  setPin: (d: any) => api.post('/auth/set-pin', d),
+
+  setPin: (d: any) =>
+    api.post('/auth/set-pin', d),
 }
 
 // ── Wallet ───────────────────────────────────────────
 
 export const walletAPI = {
-  balance: () => api.get('/wallet/balance'),
-  deposit: (d: any) => api.post('/wallet/deposit', d),
-  transfer: (d: any) => api.post('/wallet/transfer', d),
-  withdraw: (d: any) => api.post('/wallet/withdraw', d),
+  balance: () =>
+    api.get('/wallet/balance'),
+
+  deposit: (d: any) =>
+    api.post('/wallet/deposit', d),
+
+  transfer: (d: any) =>
+    api.post('/wallet/transfer', d),
+
+  withdraw: (d: any) =>
+    api.post('/wallet/withdraw', d),
 }
 
 // ── Transactions ─────────────────────────────────────
 
 export const txAPI = {
   list: (p?: any) =>
-    api.get('/transactions', { params: p }),
+    api.get('/transactions', {
+      params: p,
+    }),
 
   get: (ref: string) =>
     api.get(`/transactions/${ref}`),
@@ -89,9 +111,11 @@ export const mpesaAPI = {
 // ── Investments ──────────────────────────────────────
 
 export const investAPI = {
-  plans: () => api.get('/invest/plans'),
+  plans: () =>
+    api.get('/invest/plans'),
 
-  mine: () => api.get('/invest'),
+  mine: () =>
+    api.get('/invest'),
 
   invest: (d: any) =>
     api.post('/invest', d),
@@ -103,7 +127,8 @@ export const investAPI = {
 // ── Forex ────────────────────────────────────────────
 
 export const forexAPI = {
-  rates: () => api.get('/forex/rates'),
+  rates: () =>
+    api.get('/forex/rates'),
 
   exchange: (d: any) =>
     api.post('/forex/exchange', d),
@@ -112,11 +137,14 @@ export const forexAPI = {
 // ── WiFi ─────────────────────────────────────────────
 
 export const wifiAPI = {
-  vendors: () => api.get('/wifi/vendors'),
+  vendors: () =>
+    api.get('/wifi/vendors'),
 
-  sessions: () => api.get('/wifi/sessions'),
+  sessions: () =>
+    api.get('/wifi/sessions'),
 
-  buy: (d: any) => api.post('/wifi/buy', d),
+  buy: (d: any) =>
+    api.post('/wifi/buy', d),
 
   validate: (v: string) =>
     api.get(`/wifi/validate/${v}`),
@@ -125,22 +153,33 @@ export const wifiAPI = {
 // ── Hotspot ──────────────────────────────────────────
 
 export const hotspotAPI = {
-  browse: () => api.get('/hotspot/browse'),
+  browse: () =>
+    api.get('/hotspot/browse'),
 
-  mine: () => api.get('/hotspot/mine'),
+  mine: () =>
+    api.get('/hotspot/mine'),
 
   register: (d: any) =>
     api.post('/hotspot/register', d),
 
-  addPackage: (vendorId: any, d: any) =>
-    api.post(`/hotspot/${vendorId}/packages`, d),
+  addPackage: (
+    vendorId: string,
+    d: any
+  ) =>
+    api.post(
+      `/hotspot/${vendorId}/packages`,
+      d
+    ),
 
-  delPackage: (vendorId: any, pkgId: any) =>
+  delPackage: (
+    vendorId: string,
+    pkgId: string
+  ) =>
     api.delete(
       `/hotspot/${vendorId}/packages/${pkgId}`
     ),
 
-  stats: (vendorId: any) =>
+  stats: (vendorId: string) =>
     api.get(`/hotspot/${vendorId}/stats`),
 }
 
@@ -159,14 +198,67 @@ export const merchantAPI = {
   link: () =>
     api.get('/merchant/link'),
 
-  pay: (slug: string, d: any) =>
-    api.post(`/merchant/pay/${slug}`, d),
+  pay: (
+    slug: string,
+    d: any
+  ) =>
+    api.post(
+      `/merchant/pay/${slug}`,
+      d
+    ),
+}
+
+// ── Packages ─────────────────────────────────────────
+
+export const packageAPI = {
+  list: () =>
+    api.get('/packages'),
+
+  get: (id: string) =>
+    api.get(`/packages/${id}`),
+
+  create: (d: any) =>
+    api.post('/packages', d),
+
+  update: (
+    id: string,
+    d: any
+  ) =>
+    api.put(`/packages/${id}`, d),
+
+  remove: (id: string) =>
+    api.delete(`/packages/${id}`),
+
+  vendorPackages: (
+    vendorId: string
+  ) =>
+    api.get(
+      `/hotspot/${vendorId}/packages`
+    ),
+
+  addVendorPackage: (
+    vendorId: string,
+    d: any
+  ) =>
+    api.post(
+      `/hotspot/${vendorId}/packages`,
+      d
+    ),
+
+  deleteVendorPackage: (
+    vendorId: string,
+    packageId: string
+  ) =>
+    api.delete(
+      `/hotspot/${vendorId}/packages/${packageId}`
+    ),
 }
 
 // ── Coupons ──────────────────────────────────────────
 
 export const couponAPI = {
-  list: () => api.get('/coupon'),
+  list: () =>
+    api.get('/coupon'),
 
   redeem: (id: string) =>
     api.post(`/coupon/${id}/redeem`),
@@ -199,7 +291,9 @@ export const notifAPI = {
     api.get('/notifications'),
 
   read: (id: string) =>
-    api.patch(`/notifications/${id}/read`),
+    api.patch(
+      `/notifications/${id}/read`
+    ),
 
   readAll: () =>
     api.patch('/notifications/read-all'),
@@ -239,26 +333,50 @@ export const adminAPI = {
     api.get('/admin/stats'),
 
   users: (p?: any) =>
-    api.get('/admin/users', { params: p }),
+    api.get('/admin/users', {
+      params: p,
+    }),
 
-  updateUserStatus: (id: string, d: any) =>
-    api.patch(`/admin/users/${id}/status`, d),
+  updateUserStatus: (
+    id: string,
+    d: any
+  ) =>
+    api.patch(
+      `/admin/users/${id}/status`,
+      d
+    ),
 
   transactions: (p?: any) =>
-    api.get('/admin/transactions', { params: p }),
+    api.get('/admin/transactions', {
+      params: p,
+    }),
 
   vendors: () =>
     api.get('/admin/vendors'),
 
-  updateVendorStatus: (id: string, d: any) =>
-    api.patch(`/admin/vendors/${id}/status`, d),
+  updateVendorStatus: (
+    id: string,
+    d: any
+  ) =>
+    api.patch(
+      `/admin/vendors/${id}/status`,
+      d
+    ),
 
   revenue: () =>
     api.get('/admin/stats'),
 
   merchants: (p?: any) =>
-    api.get('/admin/merchants', { params: p }),
+    api.get('/admin/merchants', {
+      params: p,
+    }),
 
-  approveMerchant: (id: string, d: any) =>
-    api.patch(`/admin/merchants/${id}/approve`, d),
+  approveMerchant: (
+    id: string,
+    d: any
+  ) =>
+    api.patch(
+      `/admin/merchants/${id}/approve`,
+      d
+    ),
 }
